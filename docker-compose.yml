@@ -1,0 +1,61 @@
+version: '3.3'
+services:
+   db:
+     image: mysql:5.7
+     #imagen de la versión de mysql 5.7
+     #se puede utilizar versiones más modernas
+     #pero hay que tener cuidado, ya que si 
+     #cambias la versión, debes de cambiar tu conector
+     #de mysql con Java.
+     volumes:
+       - db_vol:/var/lib/mysql
+       - ./mysql-dump:/docker-entrypoint-initdb.d
+       #son los volumenes que se van a generar en 
+       #nuestra carpeta padre, y en especifico
+       #la base de datos se almacenará en 
+       #mysql-dump
+     environment:
+       MYSQL_ROOT_PASSWORD: root
+       MYSQL_DATABASE: testdb1
+       MYSQL_USER: testuser
+       MYSQL_PASSWORD: root
+     ports:
+       - 3306:3306
+      #podemos poner el 3307 o 
+      #el 3306 si detenemos nuestro servicio 
+      #de MySQL local
+   phpmyadmin:
+    depends_on:
+      - db
+    #la dependencia de la base de datos
+    #anteriormente creada
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - '8081:80'
+    #podemos establecer el puerto 8000
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: root
+   web:
+    build:
+      context: .       
+    depends_on:
+      - db
+    #dependencia de la base de datos tambien
+    image: tomcat
+    volumes:
+      - ./target/LoginWebApp-1.war:/usr/local/tomcat/webapps/LoginWebApp-1.war
+    #ATENCIÓN!!!!, para que funcione es necesario ponerlo de esta manera
+    #     ./target/LoginWebApp-1:/usr/local/tomcat/webapps/LoginWebApp-1
+    ports:
+      - '8082:8080'
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: testdb1
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: root
+    #al igual que con apache y nginx para
+    #establecer uniones debemos de usar el 
+    #mismo usuario
+volumes:
+    db_vol:      
